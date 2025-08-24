@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظم رحلة الأصدقاء - تفاعلي</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #27ae60, #229954);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .add-form {
+            background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #34495e;
+            font-size: 1.1em;
+        }
+        
+        input, select, textarea {
+            padding: 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            min-width: 800px;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: right;
+            border-bottom: 1px solid #ecf0f1;
+            position: relative;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        tr:hover {
+            background: #e8f4fd;
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+        
+        .editable {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 5px;
+            transition: background 0.2s ease;
+            min-height: 20px;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .editable:hover {
+            background: #f0f8ff;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        
+        .editing {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+        }
+        
+        .status-completed {
+            background: linear-gradient(45deg, #d4edda, #c3e6cb);
+            color: #155724;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .status-pending {
+            background: linear-gradient(45deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .status-completed:hover, .status-pending:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        
+        .delete-btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .delete-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 10px rgba(231, 76, 60, 0.4);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: linear-gradient(45deg, #27ae60, #229954);
+        }
+        
+        .notification.error {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎒 منظم رحلة الأصدقاء - تفاعلي</h1>
+        
+        <div class="header-actions">
+            <button class="btn btn-success" onclick="saveData()">💾 حفظ البيانات</button>
+            <button class="btn btn-warning" onclick="loadData()">📂 تحميل البيانات</button>
+            <button class="btn btn-primary" onclick="exportToCSV()">📊 تصدير CSV</button>
+            <button class="btn btn-danger" onclick="clearAllData()">🗑️ مسح الكل</button>
+        </div>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalItems">0</div>
+                <div class="stat-label">إجمالي العناصر</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completedItems">0</div>
+                <div class="stat-label">تم إحضارها</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingItems">0</div>
+                <div class="stat-label">لم يتم إحضارها</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completionRate">0%</div>
+                <div class="stat-label">نسبة الإنجاز</div>
+            </div>
+        </div>
+
+        <div class="add-form">
+            <h3>➕ إضافة عنصر جديد</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="friendName">👤 اسم الصديق:</label>
+                    <input type="text" id="friendName" placeholder="أدخل اسم الصديق">
+                </div>
+                <div class="form-group">
+                    <label for="itemName">📦 العنصر المطلوب:</label>
+                    <input type="text" id="itemName" placeholder="أدخل العنصر المطلوب إحضاره">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="status">✅ حالة الإحضار:</label>
+                    <select id="status">
+                        <option value="لم يتم">❌ لم يتم</option>
+                        <option value="تم">✅ تم</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="notes">📝 ملاحظات إضافية:</label>
+                    <textarea id="notes" rows="2" placeholder="أدخل أي ملاحظات إضافية"></textarea>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="addItem()">➕ إضافة العنصر</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>جاري التحميل...</p>
+        </div>
+
+        <div class="table-container">
+            <table id="tripTable">
+                <thead>
+                    <tr>
+                        <th>👤 اسم الصديق</th>
+                        <th>📦 العناصر المطلوب إحضارها</th>
+                        <th>✅ حالة الإحضار</th>
+                        <th>📝 ملاحظات إضافية</th>
+                        <th>⚙️ إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- البيانات ستُحمل من localStorage -->
+                </tbody>
+            </table>
+            
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <h3>📋 لا توجد عناصر حالياً</h3>
+                <p>ابدأ بإضافة عناصر جديدة لرحلتك!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // متغيرات عامة
+        let tripData = [];
+        let editingCell = null;
+        
+        // تحميل البيانات عند بدء التشغيل
+        window.onload = function() {
+            loadData();
+        };
+        
+        // حفظ البيانات في localStorage
+        function saveData() {
+            try {
+                localStorage.setItem('tripData', JSON.stringify(tripData));
+                localStorage.setItem('lastSaved', new Date().toISOString());
+                showNotification('تم حفظ البيانات بنجاح! 💾', 'success');
+            } catch (error) {
+                showNotification('خطأ في حفظ البيانات! ❌', 'error');
+                console.error('Error saving data:', error);
+            }
+        }
+        
+        // تحميل البيانات من localStorage
+        function loadData() {
+            showLoading(true);
+            
+            setTimeout(() => {
+                try {
+                    const savedData = localStorage.getItem('tripData');
+                    if (savedData) {
+                        tripData = JSON.parse(savedData);
+                        showNotification('تم تحميل البيانات بنجاح! 📂', 'success');
+                    } else {
+                        // بيانات افتراضية
+                        tripData = [
+                            {id: 1, friend: 'أحمد', item: 'خيمة كبيرة', status: 'تم', notes: 'خيمة تتسع لـ 6 أشخاص'},
+                            {id: 2, friend: 'فاطمة', item: 'أدوات الطبخ', status: 'لم يتم', notes: 'مقلاة وأواني الطعام'},
+                            {id: 3, friend: 'محمد', item: 'مواد التنظيف', status: 'تم', notes: 'صابون ومناديل ورقية'},
+                            {id: 4, friend: 'سارة', item: 'الإسعافات الأولية', status: 'لم يتم', notes: 'صندوق إسعافات أولية كامل'},
+                            {id: 5, friend: 'علي', item: 'ألعاب ترفيهية', status: 'تم', notes: 'كرة قدم وأوراق لعب'},
+                            {id: 6, friend: 'نور', item: 'المشروبات', status: 'لم يتم', notes: 'ماء وعصائر ومشروبات ساخنة'}
+                        ];
+                        saveData();
+                    }
+                    
+                    renderTable();
+                    updateStats();
+                } catch (error) {
+                    showNotification('خطأ في تحميل البيانات! ❌', 'error');
+                    console.error('Error loading data:', error);
+                }
+                
+                showLoading(false);
+            }, 500);
+        }
+        
+        // عرض/إخفاء شاشة التحميل
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+        
+        // عرض الإشعارات
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // إضافة عنصر جديد
+        function addItem() {
+            const friendName = document.getElementById('friendName').value.trim();
+            const itemName = document.getElementById('itemName').value.trim();
+            const status = document.getElementById('status').value;
+            const notes = document.getElementById('notes').value.trim();
+
+            if (!friendName || !itemName) {
+                showNotification('يرجى إدخال اسم الصديق والعنصر المطلوب! ⚠️', 'error');
+                return;
+            }
+
+            const newItem = {
+                id: Date.now(),
+                friend: friendName,
+                item: itemName,
+                status: status,
+                notes: notes
+            };
+            
+            tripData.push(newItem);
+            
+            // إعادة تعيين النموذج
+            document.getElementById('friendName').value = '';
+            document.getElementById('itemName').value = '';
+            document.getElementById('status').value = 'لم يتم';
+            document.getElementById('notes').value = '';
+            
+            renderTable();
+            updateStats();
+            saveData();
+            
+            showNotification('تم إضافة العنصر بنجاح! ✅', 'success');
+        }
+        
+        // حذف عنصر
+        function deleteItem(id) {
+            if (confirm('هل أنت متأكد من حذف هذا العنصر؟ 🗑️')) {
+                tripData = tripData.filter(item => item.id !== id);
+                renderTable();
+                updateStats();
+                saveData();
+                showNotification('تم حذف العنصر بنجاح! 🗑️', 'success');
+            }
+        }
+        
+        // تغيير الحالة
+        function toggleStatus(id) {
+            const item = tripData.find(item => item.id === id);
+            if (item) {
+                item.status = item.status === 'تم' ? 'لم يتم' : 'تم';
+                renderTable();
+                updateStats();
+                saveData();
+                showNotification('تم تحديث الحالة! 🔄', 'success');
+            }
+        }
+        
+        // تعديل خلية
+        function editCell(element, id, field) {
+            if (editingCell) {
+                finishEditing();
+            }
+            
+            editingCell = { element, id, field, originalValue: element.textContent };
+            element.classList.add('editing');
+            element.contentEditable = true;
+            element.focus();
+            
+            // تحديد النص
+            const range = document.createRange();
+            range.selectNodeContents(element);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+        
+        // إنهاء التعديل
+        function finishEditing() {
+            if (!editingCell) return;
+            
+            const { element, id, field, originalValue } = editingCell;
+            const newValue = element.textContent.trim();
+            
+            if (newValue !== originalValue) {
+                const item = tripData.find(item => item.id === id);
+                if (item) {
+                    item[field] = newValue;
+                    saveData();
+                    showNotification('تم حفظ التعديل! ✏️', 'success');
+                }
+            }
+            
+            element.classList.remove('editing');
+            element.contentEditable = false;
+            editingCell = null;
+        }
+        
+        // رسم الجدول
+        function renderTable() {
+            const tableBody = document.getElementById('tableBody');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (tripData.length === 0) {
+                tableBody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            tableBody.innerHTML = tripData.map(item => {
+                const statusClass = item.status === 'تم' ? 'status-completed' : 'status-pending';
+                const statusIcon = item.status === 'تم' ? '✅' : '❌';
+                
+                return `
+                    <tr>
+                        <td>
+                            <div class="editable" onclick="editCell(this, ${item.id}, 'friend')">
+                                ${item.friend}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="editable" onclick="editCell(this, ${item.id}, 'item')">
+                                ${item.item}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="${statusClass}" onclick="toggleStatus(${item.id})">
+                                ${statusIcon} ${item.status}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="editable" onclick="editCell(this, ${item.id}, 'notes')">
+                                ${item.notes}
+                            </div>
+                        </td>
+                        <td>
+                            <button class="delete-btn" onclick="deleteItem(${item.id})">
+                                🗑️ حذف
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // تحديث الإحصائيات
+        function updateStats() {
+            const totalItems = tripData.length;
+            const completedItems = tripData.filter(item => item.status === 'تم').length;
+            const pendingItems = totalItems - completedItems;
+            const completionRate = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+            
+            document.getElementById('totalItems').textContent = totalItems;
+            document.getElementById('completedItems').textContent = completedItems;
+            document.getElementById('pendingItems').textContent = pendingItems;
+            document.getElementById('completionRate').textContent = completionRate + '%';
+        }
+        
+        // تصدير إلى CSV
+        function exportToCSV() {
+            if (tripData.length === 0) {
+                showNotification('لا توجد بيانات للتصدير! ⚠️', 'error');
+                return;
+            }
+            
+            const headers = ['اسم الصديق', 'العناصر المطلوب إحضارها', 'حالة الإحضار', 'ملاحظات إضافية'];
+            const csvContent = [
+                headers.join(','),
+                ...tripData.map(item => [
+                    `"${item.friend}"`,
+                    `"${item.item}"`,
+                    `"${item.status}"`,
+                    `"${item.notes}"`
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `تنظيم_رحلة_الأصدقاء_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('تم تصدير البيانات بنجاح! 📊', 'success');
+        }
+        
+        // مسح جميع البيانات
+        function clearAllData() {
+            if (confirm('هل أنت متأكد من مسح جميع البيانات؟ ⚠️\nهذا الإجراء لا يمكن التراجع عنه!')) {
+                tripData = [];
+                localStorage.removeItem('tripData');
+                renderTable();
+                updateStats();
+                showNotification('تم مسح جميع البيانات! 🗑️', 'success');
+            }
+        }
+        
+        // معالجة الأحداث
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && editingCell) {
+                finishEditing();
+            } else if (e.key === 'Escape' && editingCell) {
+                // إلغاء التعديل
+                editingCell.element.textContent = editingCell.originalValue;
+                finishEditing();
+            }
+        });
+        
+        document.addEventListener('click', function(e) {
+            if (editingCell && !editingCell.element.contains(e.target)) {
+                finishEditing();
+            }
+        });
+        
+        // حفظ تلقائي كل 30 ثانية
+        setInterval(() => {
+            if (tripData.length > 0) {
+                saveData();
+            }
+        }, 30000);
+        
+        // حفظ البيانات عند إغلاق الصفحة
+        window.addEventListener('beforeunload', function() {
+            if (tripData.length > 0) {
+                saveData();
+            }
+        });
+    </script>
+</body>
+</html>
