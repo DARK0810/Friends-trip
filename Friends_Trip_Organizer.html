@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منظم رحلة الأصدقاء - تفاعلي</title>
+    <title>منظم رحلة الأصدقاء - تفاعلي مع الحفظ المشترك</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
     <style>
         * {
             box-sizing: border-box;
@@ -33,6 +38,56 @@
             margin-bottom: 30px;
             font-size: 2.5em;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .trip-management {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .trip-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .trip-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .current-trip {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .share-section {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid #ff9800;
+        }
+        
+        .share-link {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            word-break: break-all;
+            margin: 10px 0;
         }
         
         .header-actions {
@@ -75,9 +130,20 @@
             color: white;
         }
         
+        .btn-info {
+            background: linear-gradient(45deg, #17a2b8, #138496);
+            color: white;
+        }
+        
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .stats {
@@ -112,12 +178,12 @@
             opacity: 0.9;
         }
         
-        .add-form {
-            background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
-            padding: 30px;
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
             border-radius: 15px;
             margin-bottom: 30px;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+            border: 2px solid #e9ecef;
         }
         
         .form-row {
@@ -132,129 +198,161 @@
             flex-direction: column;
         }
         
-        label {
+        .form-group label {
             margin-bottom: 8px;
             font-weight: bold;
-            color: #34495e;
-            font-size: 1.1em;
+            color: #2c3e50;
         }
         
-        input, select, textarea {
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
             padding: 12px;
-            border: 2px solid #bdc3c7;
-            border-radius: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
             font-size: 16px;
             transition: border-color 0.3s ease;
-            background: white;
         }
         
-        input:focus, select:focus, textarea:focus {
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
             outline: none;
             border-color: #3498db;
-            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
         
         .table-container {
-            overflow-x: auto;
+            background: white;
             border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
-            min-width: 800px;
-        }
-        
-        th, td {
-            padding: 15px;
-            text-align: right;
-            border-bottom: 1px solid #ecf0f1;
-            position: relative;
         }
         
         th {
-            background: linear-gradient(135deg, #3498db, #2980b9);
+            background: linear-gradient(135deg, #2c3e50, #34495e);
             color: white;
+            padding: 20px;
+            text-align: center;
             font-weight: bold;
             font-size: 1.1em;
-            position: sticky;
-            top: 0;
-            z-index: 10;
         }
         
-        tr:nth-child(even) {
-            background: #f8f9fa;
+        td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
         }
         
         tr:hover {
-            background: #e8f4fd;
-            transform: scale(1.01);
-            transition: all 0.2s ease;
+            background-color: #f8f9fa;
         }
         
         .editable {
             cursor: pointer;
             padding: 8px;
             border-radius: 5px;
-            transition: background 0.2s ease;
+            transition: background-color 0.3s ease;
             min-height: 20px;
-            display: inline-block;
-            width: 100%;
         }
         
         .editable:hover {
-            background: #f0f8ff;
-            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+            background-color: #e3f2fd;
         }
         
-        .editing {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
+        .editable.editing {
+            background-color: #fff3e0;
+            border: 2px solid #ff9800;
         }
         
         .status-completed {
-            background: linear-gradient(45deg, #d4edda, #c3e6cb);
-            color: #155724;
+            background: linear-gradient(45deg, #27ae60, #229954);
+            color: white;
             padding: 8px 15px;
             border-radius: 20px;
-            font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            display: inline-block;
         }
         
         .status-pending {
-            background: linear-gradient(45deg, #f8d7da, #f5c6cb);
-            color: #721c24;
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
             padding: 8px 15px;
             border-radius: 20px;
-            font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            display: inline-block;
         }
         
-        .status-completed:hover, .status-pending:hover {
+        .status-completed:hover,
+        .status-pending:hover {
             transform: scale(1.05);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
         }
         
         .delete-btn {
             background: linear-gradient(45deg, #e74c3c, #c0392b);
             color: white;
             border: none;
-            padding: 8px 12px;
+            padding: 8px 15px;
             border-radius: 20px;
             cursor: pointer;
-            font-size: 12px;
             transition: all 0.3s ease;
         }
         
         .delete-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 3px 10px rgba(231, 76, 60, 0.4);
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading p {
+            color: white;
+            font-size: 1.2em;
         }
         
         .notification {
@@ -265,7 +363,7 @@
             border-radius: 10px;
             color: white;
             font-weight: bold;
-            z-index: 1000;
+            z-index: 1001;
             transform: translateX(400px);
             transition: transform 0.3s ease;
         }
@@ -282,75 +380,80 @@
             background: linear-gradient(45deg, #e74c3c, #c0392b);
         }
         
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 50px;
-            color: #7f8c8d;
-        }
-        
-        .empty-state h3 {
-            font-size: 1.5em;
-            margin-bottom: 10px;
+        .notification.info {
+            background: linear-gradient(45deg, #3498db, #2980b9);
         }
         
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
-                margin: 10px;
             }
             
             h1 {
-                font-size: 1.8em;
-            }
-            
-            .stats {
-                grid-template-columns: repeat(2, 1fr);
+                font-size: 2em;
             }
             
             .form-row {
                 grid-template-columns: 1fr;
             }
             
-            th, td {
-                padding: 10px 8px;
+            .header-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            table {
                 font-size: 14px;
+            }
+            
+            th, td {
+                padding: 10px 5px;
+            }
+            
+            .trip-controls {
+                flex-direction: column;
+            }
+            
+            .trip-input {
+                min-width: 100%;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎒 منظم رحلة الأصدقاء - تفاعلي</h1>
+        <h1>🏕️ منظم رحلة الأصدقاء - تفاعلي مع الحفظ المشترك</h1>
         
-        <div class="header-actions">
-            <button class="btn btn-success" onclick="saveData()">💾 حفظ البيانات</button>
-            <button class="btn btn-warning" onclick="loadData()">📂 تحميل البيانات</button>
-            <button class="btn btn-primary" onclick="exportToCSV()">📊 تصدير CSV</button>
-            <button class="btn btn-danger" onclick="clearAllData()">🗑️ مسح الكل</button>
+        <!-- إدارة الرحلات -->
+        <div class="trip-management">
+            <h3>🎯 إدارة الرحلات</h3>
+            
+            <div class="trip-controls">
+                <input type="text" id="tripName" class="trip-input" placeholder="اسم الرحلة الجديدة...">
+                <button class="btn btn-success" onclick="createNewTrip()">إنشاء رحلة جديدة</button>
+                <input type="text" id="tripId" class="trip-input" placeholder="معرف الرحلة للانضمام...">
+                <button class="btn btn-info" onclick="joinTrip()">الانضمام لرحلة</button>
+            </div>
+            
+            <div class="current-trip" id="currentTripInfo" style="display: none;">
+                <h4>الرحلة الحالية: <span id="currentTripName"></span></h4>
+                <p>معرف الرحلة: <span id="currentTripId"></span></p>
+            </div>
+            
+            <div class="share-section" id="shareSection" style="display: none;">
+                <h4>🔗 مشاركة الرحلة</h4>
+                <p>شارك هذا المعرف مع أصدقائك للانضمام للرحلة:</p>
+                <div class="share-link" id="shareLink"></div>
+                <button class="btn btn-warning" onclick="copyShareLink()">نسخ المعرف</button>
+            </div>
         </div>
         
-        <div class="stats" id="stats">
+        <!-- الإحصائيات -->
+        <div class="stats">
             <div class="stat-card">
                 <div class="stat-number" id="totalItems">0</div>
                 <div class="stat-label">إجمالي العناصر</div>
@@ -368,40 +471,50 @@
                 <div class="stat-label">نسبة الإنجاز</div>
             </div>
         </div>
-
-        <div class="add-form">
+        
+        <!-- نموذج إضافة عنصر جديد -->
+        <div class="form-section">
             <h3>➕ إضافة عنصر جديد</h3>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="friendName">👤 اسم الصديق:</label>
-                    <input type="text" id="friendName" placeholder="أدخل اسم الصديق">
+                    <label for="friendName">👤 اسم الصديق</label>
+                    <input type="text" id="friendName" placeholder="أدخل اسم الصديق...">
                 </div>
                 <div class="form-group">
-                    <label for="itemName">📦 العنصر المطلوب:</label>
-                    <input type="text" id="itemName" placeholder="أدخل العنصر المطلوب إحضاره">
+                    <label for="itemName">📦 العنصر المطلوب</label>
+                    <input type="text" id="itemName" placeholder="أدخل العنصر المطلوب إحضاره...">
+                </div>
+                <div class="form-group">
+                    <label for="status">✅ حالة الإحضار</label>
+                    <select id="status">
+                        <option value="لم يتم">لم يتم</option>
+                        <option value="تم">تم</option>
+                    </select>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="status">✅ حالة الإحضار:</label>
-                    <select id="status">
-                        <option value="لم يتم">❌ لم يتم</option>
-                        <option value="تم">✅ تم</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="notes">📝 ملاحظات إضافية:</label>
-                    <textarea id="notes" rows="2" placeholder="أدخل أي ملاحظات إضافية"></textarea>
+                    <label for="notes">📝 ملاحظات إضافية</label>
+                    <textarea id="notes" rows="3" placeholder="أدخل أي ملاحظات إضافية..."></textarea>
                 </div>
             </div>
-            <button class="btn btn-primary" onclick="addItem()">➕ إضافة العنصر</button>
+            <button class="btn btn-success" onclick="addItem()">➕ إضافة العنصر</button>
         </div>
-
+        
+        <!-- أزرار الإجراءات -->
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="exportToCSV()">📊 تصدير إلى CSV</button>
+            <button class="btn btn-warning" onclick="syncData()">🔄 مزامنة البيانات</button>
+            <button class="btn btn-danger" onclick="clearAllData()">🗑️ مسح جميع البيانات</button>
+        </div>
+        
+        <!-- شاشة التحميل -->
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <p>جاري التحميل...</p>
         </div>
-
+        
+        <!-- جدول البيانات -->
         <div class="table-container">
             <table id="tripTable">
                 <thead>
@@ -414,78 +527,281 @@
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <!-- البيانات ستُحمل من localStorage -->
+                    <!-- البيانات ستُحمل من Firebase -->
                 </tbody>
             </table>
             
             <div class="empty-state" id="emptyState" style="display: none;">
                 <h3>📋 لا توجد عناصر حالياً</h3>
-                <p>ابدأ بإضافة عناصر جديدة لرحلتك!</p>
+                <p>ابدأ بإنشاء رحلة جديدة أو الانضمام لرحلة موجودة!</p>
             </div>
         </div>
     </div>
-
+    
     <div class="notification" id="notification"></div>
-
+    
     <script>
+        // إعداد Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYZ123456789abcdefghijklmnopqrst",
+            authDomain: "friends-trip-organizer.firebaseapp.com",
+            projectId: "friends-trip-organizer",
+            storageBucket: "friends-trip-organizer.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef123456789012345"
+        };
+        
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
         // متغيرات عامة
         let tripData = [];
         let editingCell = null;
+        let currentTripId = null;
+        let currentTripName = null;
         
         // تحميل البيانات عند بدء التشغيل
         window.onload = function() {
-            loadData();
+            loadSavedTrip();
         };
         
-        // حفظ البيانات في localStorage
-        function saveData() {
-            try {
-                localStorage.setItem('tripData', JSON.stringify(tripData));
-                localStorage.setItem('lastSaved', new Date().toISOString());
-                showNotification('تم حفظ البيانات بنجاح! 💾', 'success');
-            } catch (error) {
-                showNotification('خطأ في حفظ البيانات! ❌', 'error');
-                console.error('Error saving data:', error);
+        // تحميل الرحلة المحفوظة محلياً
+        function loadSavedTrip() {
+            const savedTripId = localStorage.getItem('currentTripId');
+            const savedTripName = localStorage.getItem('currentTripName');
+            
+            if (savedTripId && savedTripName) {
+                currentTripId = savedTripId;
+                currentTripName = savedTripName;
+                updateTripInfo();
+                loadTripData();
+            } else {
+                showEmptyState();
             }
         }
         
-        // تحميل البيانات من localStorage
-        function loadData() {
+        // إنشاء رحلة جديدة
+        async function createNewTrip() {
+            const tripName = document.getElementById('tripName').value.trim();
+            
+            if (!tripName) {
+                showNotification('يرجى إدخال اسم الرحلة! ⚠️', 'error');
+                return;
+            }
+            
             showLoading(true);
             
-            setTimeout(() => {
-                try {
-                    const savedData = localStorage.getItem('tripData');
-                    if (savedData) {
-                        tripData = JSON.parse(savedData);
-                        showNotification('تم تحميل البيانات بنجاح! 📂', 'success');
-                    } else {
-                        // بيانات افتراضية
-                        tripData = [
-                            {id: 1, friend: 'أحمد', item: 'خيمة كبيرة', status: 'تم', notes: 'خيمة تتسع لـ 6 أشخاص'},
-                            {id: 2, friend: 'فاطمة', item: 'أدوات الطبخ', status: 'لم يتم', notes: 'مقلاة وأواني الطعام'},
-                            {id: 3, friend: 'محمد', item: 'مواد التنظيف', status: 'تم', notes: 'صابون ومناديل ورقية'},
-                            {id: 4, friend: 'سارة', item: 'الإسعافات الأولية', status: 'لم يتم', notes: 'صندوق إسعافات أولية كامل'},
-                            {id: 5, friend: 'علي', item: 'ألعاب ترفيهية', status: 'تم', notes: 'كرة قدم وأوراق لعب'},
-                            {id: 6, friend: 'نور', item: 'المشروبات', status: 'لم يتم', notes: 'ماء وعصائر ومشروبات ساخنة'}
-                        ];
-                        saveData();
-                    }
-                    
-                    renderTable();
-                    updateStats();
-                } catch (error) {
-                    showNotification('خطأ في تحميل البيانات! ❌', 'error');
-                    console.error('Error loading data:', error);
+            try {
+                // إنشاء معرف فريد للرحلة
+                const tripId = generateTripId();
+                
+                // إنشاء وثيقة الرحلة في Firebase
+                await db.collection('trips').doc(tripId).set({
+                    name: tripName,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    items: []
+                });
+                
+                // حفظ معلومات الرحلة محلياً
+                currentTripId = tripId;
+                currentTripName = tripName;
+                localStorage.setItem('currentTripId', tripId);
+                localStorage.setItem('currentTripName', tripName);
+                
+                // تحديث الواجهة
+                updateTripInfo();
+                tripData = [];
+                renderTable();
+                updateStats();
+                
+                document.getElementById('tripName').value = '';
+                showNotification('تم إنشاء الرحلة بنجاح! 🎉', 'success');
+                
+            } catch (error) {
+                console.error('Error creating trip:', error);
+                showNotification('خطأ في إنشاء الرحلة! ❌', 'error');
+            }
+            
+            showLoading(false);
+        }
+        
+        // الانضمام لرحلة موجودة
+        async function joinTrip() {
+            const tripId = document.getElementById('tripId').value.trim();
+            
+            if (!tripId) {
+                showNotification('يرجى إدخال معرف الرحلة! ⚠️', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                // التحقق من وجود الرحلة
+                const tripDoc = await db.collection('trips').doc(tripId).get();
+                
+                if (!tripDoc.exists) {
+                    showNotification('الرحلة غير موجودة! ❌', 'error');
+                    showLoading(false);
+                    return;
                 }
                 
-                showLoading(false);
-            }, 500);
+                const tripData = tripDoc.data();
+                
+                // حفظ معلومات الرحلة محلياً
+                currentTripId = tripId;
+                currentTripName = tripData.name;
+                localStorage.setItem('currentTripId', tripId);
+                localStorage.setItem('currentTripName', tripData.name);
+                
+                // تحديث الواجهة وتحميل البيانات
+                updateTripInfo();
+                loadTripData();
+                
+                document.getElementById('tripId').value = '';
+                showNotification('تم الانضمام للرحلة بنجاح! 🎉', 'success');
+                
+            } catch (error) {
+                console.error('Error joining trip:', error);
+                showNotification('خطأ في الانضمام للرحلة! ❌', 'error');
+            }
+            
+            showLoading(false);
+        }
+        
+        // تحديث معلومات الرحلة في الواجهة
+        function updateTripInfo() {
+            if (currentTripId && currentTripName) {
+                document.getElementById('currentTripName').textContent = currentTripName;
+                document.getElementById('currentTripId').textContent = currentTripId;
+                document.getElementById('shareLink').textContent = currentTripId;
+                document.getElementById('currentTripInfo').style.display = 'block';
+                document.getElementById('shareSection').style.display = 'block';
+            } else {
+                document.getElementById('currentTripInfo').style.display = 'none';
+                document.getElementById('shareSection').style.display = 'none';
+            }
+        }
+        
+        // نسخ رابط المشاركة
+        function copyShareLink() {
+            if (currentTripId) {
+                navigator.clipboard.writeText(currentTripId).then(() => {
+                    showNotification('تم نسخ معرف الرحلة! 📋', 'success');
+                }).catch(() => {
+                    showNotification('فشل في نسخ المعرف! ❌', 'error');
+                });
+            }
+        }
+        
+        // توليد معرف فريد للرحلة
+        function generateTripId() {
+            return 'trip_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // تحميل بيانات الرحلة من Firebase
+        async function loadTripData() {
+            if (!currentTripId) {
+                showEmptyState();
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const tripDoc = await db.collection('trips').doc(currentTripId).get();
+                
+                if (tripDoc.exists) {
+                    const data = tripDoc.data();
+                    tripData = data.items || [];
+                    renderTable();
+                    updateStats();
+                    showNotification('تم تحميل البيانات بنجاح! 📂', 'success');
+                } else {
+                    tripData = [];
+                    renderTable();
+                    updateStats();
+                    showNotification('الرحلة غير موجودة! ❌', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading trip data:', error);
+                showNotification('خطأ في تحميل البيانات! ❌', 'error');
+                // تحميل البيانات المحلية كبديل
+                loadLocalData();
+            }
+            
+            showLoading(false);
+        }
+        
+        // تحميل البيانات المحلية (كبديل)
+        function loadLocalData() {
+            try {
+                const savedData = localStorage.getItem('tripData_' + currentTripId);
+                if (savedData) {
+                    tripData = JSON.parse(savedData);
+                } else {
+                    tripData = [];
+                }
+                renderTable();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading local data:', error);
+                tripData = [];
+                renderTable();
+                updateStats();
+            }
+        }
+        
+        // حفظ البيانات في Firebase
+        async function saveData() {
+            if (!currentTripId) {
+                showNotification('يرجى إنشاء رحلة أو الانضمام لرحلة أولاً! ⚠️', 'error');
+                return;
+            }
+            
+            try {
+                // حفظ في Firebase
+                await db.collection('trips').doc(currentTripId).update({
+                    items: tripData,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // حفظ محلي كنسخة احتياطية
+                localStorage.setItem('tripData_' + currentTripId, JSON.stringify(tripData));
+                localStorage.setItem('lastSaved_' + currentTripId, new Date().toISOString());
+                
+                showNotification('تم حفظ البيانات بنجاح! 💾', 'success');
+            } catch (error) {
+                console.error('Error saving data:', error);
+                // حفظ محلي في حالة فشل Firebase
+                localStorage.setItem('tripData_' + currentTripId, JSON.stringify(tripData));
+                showNotification('تم الحفظ محلياً فقط! ⚠️', 'error');
+            }
+        }
+        
+        // مزامنة البيانات
+        async function syncData() {
+            if (!currentTripId) {
+                showNotification('لا توجد رحلة نشطة للمزامنة! ⚠️', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            await loadTripData();
+            showLoading(false);
+        }
+        
+        // عرض حالة فارغة
+        function showEmptyState() {
+            tripData = [];
+            renderTable();
+            updateStats();
         }
         
         // عرض/إخفاء شاشة التحميل
         function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
         }
         
         // عرض الإشعارات
@@ -501,17 +817,22 @@
         }
         
         // إضافة عنصر جديد
-        function addItem() {
+        async function addItem() {
+            if (!currentTripId) {
+                showNotification('يرجى إنشاء رحلة أو الانضمام لرحلة أولاً! ⚠️', 'error');
+                return;
+            }
+            
             const friendName = document.getElementById('friendName').value.trim();
             const itemName = document.getElementById('itemName').value.trim();
             const status = document.getElementById('status').value;
             const notes = document.getElementById('notes').value.trim();
-
+            
             if (!friendName || !itemName) {
                 showNotification('يرجى إدخال اسم الصديق والعنصر المطلوب! ⚠️', 'error');
                 return;
             }
-
+            
             const newItem = {
                 id: Date.now(),
                 friend: friendName,
@@ -530,30 +851,30 @@
             
             renderTable();
             updateStats();
-            saveData();
+            await saveData();
             
             showNotification('تم إضافة العنصر بنجاح! ✅', 'success');
         }
         
         // حذف عنصر
-        function deleteItem(id) {
+        async function deleteItem(id) {
             if (confirm('هل أنت متأكد من حذف هذا العنصر؟ 🗑️')) {
                 tripData = tripData.filter(item => item.id !== id);
                 renderTable();
                 updateStats();
-                saveData();
+                await saveData();
                 showNotification('تم حذف العنصر بنجاح! 🗑️', 'success');
             }
         }
         
         // تغيير الحالة
-        function toggleStatus(id) {
+        async function toggleStatus(id) {
             const item = tripData.find(item => item.id === id);
             if (item) {
                 item.status = item.status === 'تم' ? 'لم يتم' : 'تم';
                 renderTable();
                 updateStats();
-                saveData();
+                await saveData();
                 showNotification('تم تحديث الحالة! 🔄', 'success');
             }
         }
@@ -578,7 +899,7 @@
         }
         
         // إنهاء التعديل
-        function finishEditing() {
+        async function finishEditing() {
             if (!editingCell) return;
             
             const { element, id, field, originalValue } = editingCell;
@@ -588,7 +909,7 @@
                 const item = tripData.find(item => item.id === id);
                 if (item) {
                     item[field] = newValue;
-                    saveData();
+                    await saveData();
                     showNotification('تم حفظ التعديل! ✏️', 'success');
                 }
             }
@@ -682,7 +1003,7 @@
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            link.setAttribute('download', `تنظيم_رحلة_الأصدقاء_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute('download', `${currentTripName || 'رحلة_الأصدقاء'}_${new Date().toISOString().split('T')[0]}.csv`);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
@@ -692,10 +1013,23 @@
         }
         
         // مسح جميع البيانات
-        function clearAllData() {
+        async function clearAllData() {
             if (confirm('هل أنت متأكد من مسح جميع البيانات؟ ⚠️\nهذا الإجراء لا يمكن التراجع عنه!')) {
                 tripData = [];
-                localStorage.removeItem('tripData');
+                
+                if (currentTripId) {
+                    try {
+                        await db.collection('trips').doc(currentTripId).update({
+                            items: [],
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } catch (error) {
+                        console.error('Error clearing data:', error);
+                    }
+                    
+                    localStorage.removeItem('tripData_' + currentTripId);
+                }
+                
                 renderTable();
                 updateStats();
                 showNotification('تم مسح جميع البيانات! 🗑️', 'success');
@@ -719,17 +1053,21 @@
             }
         });
         
-        // حفظ تلقائي كل 30 ثانية
-        setInterval(() => {
-            if (tripData.length > 0) {
-                saveData();
+        // مزامنة تلقائية كل دقيقة
+        setInterval(async () => {
+            if (currentTripId && tripData.length > 0) {
+                try {
+                    await loadTripData();
+                } catch (error) {
+                    console.error('Auto-sync failed:', error);
+                }
             }
-        }, 30000);
+        }, 60000);
         
         // حفظ البيانات عند إغلاق الصفحة
-        window.addEventListener('beforeunload', function() {
-            if (tripData.length > 0) {
-                saveData();
+        window.addEventListener('beforeunload', async function() {
+            if (currentTripId && tripData.length > 0) {
+                await saveData();
             }
         });
     </script>
