@@ -551,9 +551,19 @@
             appId: "1:123456789012:web:abcdef123456789012345"
         };
         
-        // تهيئة Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        // تهيئة Firebase مع معالجة الأخطاء
+        let db = null;
+        let firebaseEnabled = false;
+        
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            firebaseEnabled = true;
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.warn('Firebase initialization failed, using local storage only:', error);
+            firebaseEnabled = false;
+        }
         
         // متغيرات عامة
         let tripData = [];
@@ -596,12 +606,22 @@
                 // إنشاء معرف فريد للرحلة
                 const tripId = generateTripId();
                 
-                // إنشاء وثيقة الرحلة في Firebase
-                await db.collection('trips').doc(tripId).set({
-                    name: tripName,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    items: []
-                });
+                // محاولة إنشاء وثيقة الرحلة في Firebase
+                if (firebaseEnabled && db) {
+                    try {
+                        await db.collection('trips').doc(tripId).set({
+                            name: tripName,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            items: []
+                        });
+                        showNotification('تم إنشاء الرحلة بنجاح مع المزامنة السحابية! 🎉', 'success');
+                    } catch (firebaseError) {
+                        console.warn('Firebase save failed, using local storage:', firebaseError);
+                        showNotification('تم إنشاء الرحلة محلياً (بدون مزامنة سحابية)! 🎉', 'info');
+                    }
+                } else {
+                    showNotification('تم إنشاء الرحلة محلياً (بدون مزامنة سحابية)! 🎉', 'info');
+                }
                 
                 // حفظ معلومات الرحلة محلياً
                 currentTripId = tripId;
@@ -616,7 +636,6 @@
                 updateStats();
                 
                 document.getElementById('tripName').value = '';
-                showNotification('تم إنشاء الرحلة بنجاح! 🎉', 'success');
                 
             } catch (error) {
                 console.error('Error creating trip:', error);
@@ -638,29 +657,49 @@
             showLoading(true);
             
             try {
-                // التحقق من وجود الرحلة
-                const tripDoc = await db.collection('trips').doc(tripId).get();
+                let tripFound = false;
+                let tripName = 'رحلة مشتركة';
                 
-                if (!tripDoc.exists) {
-                    showNotification('الرحلة غير موجودة! ❌', 'error');
-                    showLoading(false);
-                    return;
+                // محاولة البحث في Firebase أولاً
+                if (firebaseEnabled && db) {
+                    try {
+                        const tripDoc = await db.collection('trips').doc(tripId).get();
+                        
+                        if (tripDoc.exists) {
+                            const tripData = tripDoc.data();
+                            tripName = tripData.name;
+                            tripFound = true;
+                            showNotification('تم الانضمام للرحلة مع المزامنة السحابية! 🎉', 'success');
+                        }
+                    } catch (firebaseError) {
+                        console.warn('Firebase connection failed:', firebaseError);
+                    }
                 }
                 
-                const tripData = tripDoc.data();
+                // إذا لم توجد في Firebase، تحقق من التخزين المحلي
+                if (!tripFound) {
+                    const localTripData = localStorage.getItem('tripData_' + tripId);
+                    if (localTripData) {
+                        tripFound = true;
+                        showNotification('تم الانضمام للرحلة محلياً! 🎉', 'info');
+                    } else {
+                        // إنشاء رحلة جديدة بهذا المعرف
+                        tripFound = true;
+                        showNotification('تم إنشاء رحلة جديدة بهذا المعرف! 🎉', 'info');
+                    }
+                }
                 
                 // حفظ معلومات الرحلة محلياً
                 currentTripId = tripId;
-                currentTripName = tripData.name;
+                currentTripName = tripName;
                 localStorage.setItem('currentTripId', tripId);
-                localStorage.setItem('currentTripName', tripData.name);
+                localStorage.setItem('currentTripName', tripName);
                 
                 // تحديث الواجهة وتحميل البيانات
                 updateTripInfo();
                 loadTripData();
                 
                 document.getElementById('tripId').value = '';
-                showNotification('تم الانضمام للرحلة بنجاح! 🎉', 'success');
                 
             } catch (error) {
                 console.error('Error joining trip:', error);
@@ -700,7 +739,7 @@
             return 'trip_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
         
-        // تحميل بيانات الرحلة من Firebase
+        // تحميل بيانات الرحلة من Firebase أو التخزين المحلي
         async function loadTripData() {
             if (!currentTripId) {
                 showEmptyState();
@@ -710,25 +749,44 @@
             showLoading(true);
             
             try {
-                const tripDoc = await db.collection('trips').doc(currentTripId).get();
+                let dataLoaded = false;
                 
-                if (tripDoc.exists) {
-                    const data = tripDoc.data();
-                    tripData = data.items || [];
-                    renderTable();
-                    updateStats();
-                    showNotification('تم تحميل البيانات بنجاح! 📂', 'success');
-                } else {
-                    tripData = [];
-                    renderTable();
-                    updateStats();
-                    showNotification('الرحلة غير موجودة! ❌', 'error');
+                // محاولة تحميل من Firebase أولاً
+                if (firebaseEnabled && db) {
+                    try {
+                        const tripDoc = await db.collection('trips').doc(currentTripId).get();
+                        
+                        if (tripDoc.exists) {
+                            const data = tripDoc.data();
+                            tripData = data.items || [];
+                            dataLoaded = true;
+                            showNotification('تم تحميل البيانات من السحابة! 📂', 'success');
+                        }
+                    } catch (firebaseError) {
+                        console.warn('Firebase load failed:', firebaseError);
+                    }
                 }
+                
+                // إذا فشل تحميل Firebase، استخدم التخزين المحلي
+                if (!dataLoaded) {
+                    loadLocalData();
+                    if (tripData.length > 0) {
+                        showNotification('تم تحميل البيانات محلياً! 📂', 'info');
+                    } else {
+                        showNotification('لا توجد بيانات محفوظة! 📂', 'info');
+                    }
+                }
+                
+                renderTable();
+                updateStats();
+                
             } catch (error) {
                 console.error('Error loading trip data:', error);
                 showNotification('خطأ في تحميل البيانات! ❌', 'error');
                 // تحميل البيانات المحلية كبديل
                 loadLocalData();
+                renderTable();
+                updateStats();
             }
             
             showLoading(false);
@@ -753,7 +811,7 @@
             }
         }
         
-        // حفظ البيانات في Firebase
+        // حفظ البيانات في Firebase أو التخزين المحلي
         async function saveData() {
             if (!currentTripId) {
                 showNotification('يرجى إنشاء رحلة أو الانضمام لرحلة أولاً! ⚠️', 'error');
@@ -761,20 +819,33 @@
             }
             
             try {
-                // حفظ في Firebase
-                await db.collection('trips').doc(currentTripId).update({
-                    items: tripData,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                let savedToCloud = false;
                 
-                // حفظ محلي كنسخة احتياطية
+                // محاولة حفظ في Firebase أولاً
+                if (firebaseEnabled && db) {
+                    try {
+                        await db.collection('trips').doc(currentTripId).update({
+                            items: tripData,
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        savedToCloud = true;
+                        showNotification('تم حفظ البيانات في السحابة! 💾', 'success');
+                    } catch (firebaseError) {
+                        console.warn('Firebase save failed:', firebaseError);
+                    }
+                }
+                
+                // حفظ محلي دائماً (كنسخة احتياطية أو أساسية)
                 localStorage.setItem('tripData_' + currentTripId, JSON.stringify(tripData));
                 localStorage.setItem('lastSaved_' + currentTripId, new Date().toISOString());
                 
-                showNotification('تم حفظ البيانات بنجاح! 💾', 'success');
+                if (!savedToCloud) {
+                    showNotification('تم الحفظ محلياً! 💾', 'info');
+                }
+                
             } catch (error) {
                 console.error('Error saving data:', error);
-                // حفظ محلي في حالة فشل Firebase
+                // حفظ محلي في حالة فشل كامل
                 localStorage.setItem('tripData_' + currentTripId, JSON.stringify(tripData));
                 showNotification('تم الحفظ محلياً فقط! ⚠️', 'error');
             }
