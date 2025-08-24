@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // قواعد أمان للرحلات (trips)
+    match /trips/{tripId} {
+      // السماح بالقراءة والكتابة للجميع مع التحقق من صحة البيانات
+      allow read, write: if request.auth != null 
+        && isValidTripData(resource.data)
+        && tripId.matches('^[a-zA-Z0-9]{6,20}$');
+      
+      // السماح بالقراءة للمستخدمين غير المسجلين (للمشاركة العامة)
+      allow read: if tripId.matches('^[a-zA-Z0-9]{6,20}$');
+      
+      // السماح بإنشاء رحلة جديدة
+      allow create: if isValidTripData(request.resource.data)
+        && tripId.matches('^[a-zA-Z0-9]{6,20}$')
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.lastModified is timestamp;
+      
+      // السماح بالتحديث مع التحقق من التوقيت
+      allow update: if isValidTripData(request.resource.data)
+        && request.resource.data.lastModified is timestamp
+        && request.resource.data.lastModified > resource.data.lastModified;
+    }
+    
+    // منع الوصول لأي مجموعات أخرى
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+  
+  // دالة للتحقق من صحة بيانات الرحلة
+  function isValidTripData(data) {
+    return data != null
+      && data.keys().hasAll(['tripName', 'items', 'createdAt', 'lastModified'])
+      && data.tripName is string
+      && data.tripName.size() > 0
+      && data.tripName.size() <= 100
+      && data.items is list
+      && data.items.size() <= 1000  // حد أقصى 1000 عنصر
+      && data.createdAt is timestamp
+      && data.lastModified is timestamp
+      && isValidItemsList(data.items);
+  }
+  
+  // دالة للتحقق من صحة قائمة العناصر
+  function isValidItemsList(items) {
+    return items.size() == 0 || (
+      items.size() > 0 && 
+      items[0].keys().hasAll(['item', 'person', 'cost', 'status']) &&
+      items[0].item is string &&
+      items[0].item.size() > 0 &&
+      items[0].item.size() <= 200 &&
+      items[0].person is string &&
+      items[0].person.size() <= 100 &&
+      items[0].cost is number &&
+      items[0].cost >= 0 &&
+      items[0].cost <= 999999 &&
+      items[0].status is string &&
+      items[0].status in ['pending', 'completed']
+    );
+  }
+}

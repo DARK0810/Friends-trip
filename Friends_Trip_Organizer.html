@@ -8,6 +8,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     
     <style>
         * {
@@ -88,6 +89,38 @@
             font-family: monospace;
             word-break: break-all;
             margin: 10px 0;
+        }
+        
+        .auth-section {
+            background: #e8f5e8;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #4caf50;
+        }
+        
+        .auth-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .user-info {
+            background: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .auth-input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 150px;
         }
         
         .header-actions {
@@ -428,6 +461,29 @@
     <div class="container">
         <h1>🏕️ منظم رحلة الأصدقاء - تفاعلي مع الحفظ المشترك</h1>
         
+        <!-- قسم المصادقة -->
+        <div class="auth-section" id="authSection">
+            <h3>🔐 تسجيل الدخول</h3>
+            
+            <!-- نموذج تسجيل الدخول -->
+            <div class="auth-controls" id="loginForm">
+                <input type="email" id="authEmail" class="auth-input" placeholder="البريد الإلكتروني">
+                <input type="password" id="authPassword" class="auth-input" placeholder="كلمة المرور">
+                <button class="btn btn-success" onclick="signIn()">تسجيل الدخول</button>
+                <button class="btn btn-info" onclick="signUp()">إنشاء حساب</button>
+                <button class="btn btn-secondary" onclick="signInAnonymously()">دخول كضيف</button>
+            </div>
+            
+            <!-- معلومات المستخدم المسجل -->
+            <div class="auth-controls" id="userInfo" style="display: none;">
+                <div class="user-info">
+                    <strong>مرحباً، <span id="userName"></span></strong>
+                    <br><small id="userEmail"></small>
+                </div>
+                <button class="btn btn-danger" onclick="signOut()">تسجيل الخروج</button>
+            </div>
+        </div>
+        
         <!-- إدارة الرحلات -->
         <div class="trip-management">
             <h3>🎯 إدارة الرحلات</h3>
@@ -553,16 +609,32 @@
         
         // تهيئة Firebase مع معالجة الأخطاء
         let db = null;
+        let auth = null;
         let firebaseEnabled = false;
+        let currentUser = null;
         
         try {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
+            auth = firebase.auth();
             firebaseEnabled = true;
             console.log('Firebase initialized successfully');
+            
+            // مراقبة حالة المصادقة
+            auth.onAuthStateChanged((user) => {
+                currentUser = user;
+                updateAuthUI(user);
+                if (user) {
+                    console.log('User signed in:', user.email || 'Anonymous');
+                } else {
+                    console.log('User signed out');
+                }
+            });
         } catch (error) {
             console.warn('Firebase initialization failed, using local storage only:', error);
             firebaseEnabled = false;
+            // إظهار واجهة المستخدم بدون مصادقة
+            updateAuthUI(null);
         }
         
         // متغيرات عامة
@@ -570,6 +642,161 @@
         let editingCell = null;
         let currentTripId = null;
         let currentTripName = null;
+        
+        // === وظائف Firebase Authentication ===
+        
+        // تحديث واجهة المصادقة
+        function updateAuthUI(user) {
+            const loginForm = document.getElementById('loginForm');
+            const userInfo = document.getElementById('userInfo');
+            const userName = document.getElementById('userName');
+            const userEmail = document.getElementById('userEmail');
+            
+            if (user) {
+                // المستخدم مسجل الدخول
+                loginForm.style.display = 'none';
+                userInfo.style.display = 'flex';
+                userName.textContent = user.displayName || user.email || 'مستخدم مجهول';
+                userEmail.textContent = user.email || 'دخول كضيف';
+            } else {
+                // المستخدم غير مسجل الدخول
+                loginForm.style.display = 'flex';
+                userInfo.style.display = 'none';
+            }
+        }
+        
+        // تسجيل الدخول
+        async function signIn() {
+            if (!firebaseEnabled || !auth) {
+                showNotification('خدمة المصادقة غير متاحة حالياً', 'error');
+                return;
+            }
+            
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            
+            if (!email || !password) {
+                showNotification('يرجى إدخال البريد الإلكتروني وكلمة المرور', 'error');
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                await auth.signInWithEmailAndPassword(email, password);
+                showNotification('تم تسجيل الدخول بنجاح! 🎉', 'success');
+                // مسح الحقول
+                document.getElementById('authEmail').value = '';
+                document.getElementById('authPassword').value = '';
+            } catch (error) {
+                console.error('Sign in error:', error);
+                let errorMessage = 'حدث خطأ في تسجيل الدخول';
+                
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        errorMessage = 'المستخدم غير موجود';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = 'كلمة المرور غير صحيحة';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'البريد الإلكتروني غير صحيح';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'تم تجاوز عدد المحاولات المسموح';
+                        break;
+                }
+                
+                showNotification(errorMessage, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // إنشاء حساب جديد
+        async function signUp() {
+            if (!firebaseEnabled || !auth) {
+                showNotification('خدمة المصادقة غير متاحة حالياً', 'error');
+                return;
+            }
+            
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            
+            if (!email || !password) {
+                showNotification('يرجى إدخال البريد الإلكتروني وكلمة المرور', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showNotification('كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'error');
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                await auth.createUserWithEmailAndPassword(email, password);
+                showNotification('تم إنشاء الحساب بنجاح! 🎉', 'success');
+                // مسح الحقول
+                document.getElementById('authEmail').value = '';
+                document.getElementById('authPassword').value = '';
+            } catch (error) {
+                console.error('Sign up error:', error);
+                let errorMessage = 'حدث خطأ في إنشاء الحساب';
+                
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        errorMessage = 'البريد الإلكتروني مستخدم بالفعل';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'البريد الإلكتروني غير صحيح';
+                        break;
+                    case 'auth/weak-password':
+                        errorMessage = 'كلمة المرور ضعيفة جداً';
+                        break;
+                }
+                
+                showNotification(errorMessage, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // تسجيل الدخول كضيف
+        async function signInAnonymously() {
+            if (!firebaseEnabled || !auth) {
+                showNotification('خدمة المصادقة غير متاحة حالياً', 'error');
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                await auth.signInAnonymously();
+                showNotification('تم الدخول كضيف بنجاح! 👤', 'success');
+            } catch (error) {
+                console.error('Anonymous sign in error:', error);
+                showNotification('حدث خطأ في الدخول كضيف', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // تسجيل الخروج
+        async function signOut() {
+            if (!firebaseEnabled || !auth) {
+                showNotification('خدمة المصادقة غير متاحة حالياً', 'error');
+                return;
+            }
+            
+            try {
+                await auth.signOut();
+                showNotification('تم تسجيل الخروج بنجاح! 👋', 'info');
+            } catch (error) {
+                console.error('Sign out error:', error);
+                showNotification('حدث خطأ في تسجيل الخروج', 'error');
+            }
+        }
+        
+        // === وظائف إدارة الرحلات ===
         
         // تحميل البيانات عند بدء التشغيل
         window.onload = function() {
@@ -821,13 +1048,36 @@
             try {
                 let savedToCloud = false;
                 
+                // إعداد بيانات الرحلة مع معلومات المستخدم
+                const tripDataToSave = {
+                    tripName: currentTripName,
+                    items: tripData,
+                    lastModified: firebase.firestore ? firebase.firestore.FieldValue.serverTimestamp() : new Date(),
+                    createdAt: new Date(),
+                    userId: currentUser ? currentUser.uid : null,
+                    userEmail: currentUser ? currentUser.email : null
+                };
+                
                 // محاولة حفظ في Firebase أولاً
                 if (firebaseEnabled && db) {
                     try {
-                        await db.collection('trips').doc(currentTripId).update({
-                            items: tripData,
-                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                        });
+                        // محاولة تحديث الوثيقة أولاً
+                        const tripRef = db.collection('trips').doc(currentTripId);
+                        const tripDoc = await tripRef.get();
+                        
+                        if (tripDoc.exists) {
+                            // تحديث الوثيقة الموجودة
+                            await tripRef.update({
+                                items: tripData,
+                                lastModified: firebase.firestore.FieldValue.serverTimestamp(),
+                                userId: currentUser ? currentUser.uid : null,
+                                userEmail: currentUser ? currentUser.email : null
+                            });
+                        } else {
+                            // إنشاء وثيقة جديدة
+                            await tripRef.set(tripDataToSave);
+                        }
+                        
                         savedToCloud = true;
                         showNotification('تم حفظ البيانات في السحابة! 💾', 'success');
                     } catch (firebaseError) {

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 مساعد تكوين Firebase</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .step {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .step:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            margin-left: 15px;
+        }
+        
+        .step-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .step-content {
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #721c24;
+        }
+        
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #155724;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+        
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        
+        .config-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            direction: ltr;
+        }
+        
+        .generate-btn {
+            background: #28a745;
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .generate-btn:hover {
+            background: #218838;
+        }
+        
+        .output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+            display: none;
+        }
+        
+        .copy-btn {
+            background: #17a2b8;
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 مساعد تكوين Firebase</h1>
+            <p>دليلك الشامل لربط منظم رحلة الأصدقاء بـ Firebase</p>
+        </div>
+        
+        <div class="content">
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    إنشاء مشروع Firebase جديد
+                </div>
+                <div class="step-content">
+                    <p>اتبع هذه الخطوات لإنشاء مشروع Firebase:</p>
+                    <ol style="margin: 15px 0; padding-right: 20px;">
+                        <li>اذهب إلى <a href="https://console.firebase.google.com/" target="_blank" class="btn">Firebase Console</a></li>
+                        <li>اضغط على "Create a project" أو "إنشاء مشروع"</li>
+                        <li>ادخل اسم المشروع: "Friends Trip Organizer"</li>
+                        <li>اختر إعدادات Google Analytics (اختياري)</li>
+                        <li>اضغط "Create project"</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    تكوين Firestore Database
+                </div>
+                <div class="step-content">
+                    <p>قم بإعداد قاعدة البيانات:</p>
+                    <ol style="margin: 15px 0; padding-right: 20px;">
+                        <li>في لوحة التحكم، اذهب إلى "Build" > "Firestore Database"</li>
+                        <li>اضغط "Create database"</li>
+                        <li>اختر "Start in test mode" للبداية</li>
+                        <li>اختر أقرب موقع جغرافي</li>
+                        <li>اضغط "Done"</li>
+                    </ol>
+                    
+                    <div class="highlight">
+                        <strong>💡 نصيحة:</strong> وضع الاختبار يسمح بالقراءة والكتابة لجميع المستخدمين لمدة 30 يوماً.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    تفعيل Firebase Authentication
+                </div>
+                <div class="step-content">
+                    <p>قم بتفعيل المصادقة:</p>
+                    <ol style="margin: 15px 0; padding-right: 20px;">
+                        <li>اذهب إلى "Build" > "Authentication"</li>
+                        <li>اضغط "Get started"</li>
+                        <li>في تبويب "Sign-in method"، فعّل:</li>
+                        <ul style="margin: 10px 0; padding-right: 20px;">
+                            <li>✅ Email/Password</li>
+                            <li>✅ Anonymous (للضيوف)</li>
+                        </ul>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">4</span>
+                    الحصول على إعدادات المشروع
+                </div>
+                <div class="step-content">
+                    <p>احصل على مفاتيح Firebase:</p>
+                    <ol style="margin: 15px 0; padding-right: 20px;">
+                        <li>في صفحة المشروع الرئيسية، اضغط على أيقونة "</>" (Web)</li>
+                        <li>ادخل اسم التطبيق: "Friends Trip Organizer Web"</li>
+                        <li>اضغط "Register app"</li>
+                        <li>انسخ إعدادات Firebase Configuration</li>
+                    </ol>
+                    
+                    <div class="warning">
+                        <strong>⚠️ مهم:</strong> احتفظ بهذه المفاتيح في مكان آمن ولا تشاركها مع أي شخص!
+                    </div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">5</span>
+                    إدخال إعدادات Firebase
+                </div>
+                <div class="step-content">
+                    <p>ادخل إعدادات Firebase الخاصة بك هنا لتوليد الكود المطلوب:</p>
+                    
+                    <div class="config-form">
+                        <div class="form-group">
+                            <label for="apiKey">API Key:</label>
+                            <input type="text" id="apiKey" placeholder="AIzaSyC...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="authDomain">Auth Domain:</label>
+                            <input type="text" id="authDomain" placeholder="your-project.firebaseapp.com">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="projectId">Project ID:</label>
+                            <input type="text" id="projectId" placeholder="your-project-id">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storageBucket">Storage Bucket:</label>
+                            <input type="text" id="storageBucket" placeholder="your-project.appspot.com">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="messagingSenderId">Messaging Sender ID:</label>
+                            <input type="text" id="messagingSenderId" placeholder="123456789">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="appId">App ID:</label>
+                            <input type="text" id="appId" placeholder="1:123456789:web:abcdef">
+                        </div>
+                        
+                        <button class="generate-btn" onclick="generateConfig()">🔧 توليد الكود</button>
+                    </div>
+                    
+                    <div id="output" class="output"></div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">6</span>
+                    تحديث ملف HTML
+                </div>
+                <div class="step-content">
+                    <p>بعد توليد الكود:</p>
+                    <ol style="margin: 15px 0; padding-right: 20px;">
+                        <li>انسخ الكود المولد أعلاه</li>
+                        <li>افتح ملف <code>Friends_Trip_Organizer.html</code></li>
+                        <li>ابحث عن القسم الذي يحتوي على <code>firebaseConfig</code></li>
+                        <li>استبدل الإعدادات الوهمية بالإعدادات الحقيقية</li>
+                        <li>احفظ الملف</li>
+                    </ol>
+                    
+                    <div class="success">
+                        <strong>🎉 تهانينا!</strong> الآن أصبح تطبيقك متصلاً بـ Firebase بشكل صحيح!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function generateConfig() {
+            const apiKey = document.getElementById('apiKey').value;
+            const authDomain = document.getElementById('authDomain').value;
+            const projectId = document.getElementById('projectId').value;
+            const storageBucket = document.getElementById('storageBucket').value;
+            const messagingSenderId = document.getElementById('messagingSenderId').value;
+            const appId = document.getElementById('appId').value;
+            
+            if (!apiKey || !authDomain || !projectId || !storageBucket || !messagingSenderId || !appId) {
+                alert('يرجى ملء جميع الحقول!');
+                return;
+            }
+            
+            const config = `// إعدادات Firebase الحقيقية
+const firebaseConfig = {
+    apiKey: "${apiKey}",
+    authDomain: "${authDomain}",
+    projectId: "${projectId}",
+    storageBucket: "${storageBucket}",
+    messagingSenderId: "${messagingSenderId}",
+    appId: "${appId}"
+};
+
+// تهيئة Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+console.log('🔥 تم تهيئة Firebase بنجاح!');
+firebaseEnabled = true;`;
+            
+            const outputDiv = document.getElementById('output');
+            outputDiv.textContent = config;
+            outputDiv.style.display = 'block';
+            
+            // إضافة زر النسخ
+            const copyBtn = document.createElement('button');
+            copyBtn.textContent = '📋 نسخ الكود';
+            copyBtn.className = 'copy-btn';
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(config).then(() => {
+                    copyBtn.textContent = '✅ تم النسخ!';
+                    setTimeout(() => {
+                        copyBtn.textContent = '📋 نسخ الكود';
+                    }, 2000);
+                });
+            };
+            
+            outputDiv.appendChild(copyBtn);
+        }
+    </script>
+</body>
+</html>
