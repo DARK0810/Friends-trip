@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار تكامل Firebase</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+        
+        .test-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .status {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .test-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        
+        .test-button:hover {
+            background: #45a049;
+        }
+        
+        .test-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .input-group {
+            margin: 10px 0;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            margin: 5px 0;
+        }
+        
+        .results {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 اختبار تكامل Firebase</h1>
+            <p>صفحة اختبار شاملة للتحقق من عمل جميع خدمات Firebase</p>
+        </div>
+        
+        <div class="content">
+            <!-- اختبار الاتصال الأساسي -->
+            <div class="test-section">
+                <h3>🔗 اختبار الاتصال الأساسي</h3>
+                <div id="connection-status" class="status pending">جاري فحص الاتصال...</div>
+                <button class="test-button" onclick="testConnection()">إعادة اختبار الاتصال</button>
+            </div>
+            
+            <!-- اختبار المصادقة -->
+            <div class="test-section">
+                <h3>🔐 اختبار المصادقة (Authentication)</h3>
+                <div id="auth-status" class="status pending">جاري فحص المصادقة...</div>
+                
+                <div class="input-group">
+                    <input type="email" id="test-email" placeholder="البريد الإلكتروني للاختبار" value="test@example.com">
+                    <input type="password" id="test-password" placeholder="كلمة المرور" value="123456">
+                </div>
+                
+                <button class="test-button" onclick="testSignUp()">اختبار إنشاء حساب</button>
+                <button class="test-button" onclick="testSignIn()">اختبار تسجيل الدخول</button>
+                <button class="test-button" onclick="testAnonymousSignIn()">اختبار الدخول المجهول</button>
+                <button class="test-button" onclick="testSignOut()">اختبار تسجيل الخروج</button>
+                
+                <div id="auth-results" class="results"></div>
+            </div>
+            
+            <!-- اختبار قاعدة البيانات -->
+            <div class="test-section">
+                <h3>💾 اختبار قاعدة البيانات (Firestore)</h3>
+                <div id="firestore-status" class="status pending">جاري فحص قاعدة البيانات...</div>
+                
+                <div class="input-group">
+                    <input type="text" id="test-data" placeholder="بيانات الاختبار" value="اختبار البيانات">
+                </div>
+                
+                <button class="test-button" onclick="testWriteData()">اختبار كتابة البيانات</button>
+                <button class="test-button" onclick="testReadData()">اختبار قراءة البيانات</button>
+                <button class="test-button" onclick="testUpdateData()">اختبار تحديث البيانات</button>
+                <button class="test-button" onclick="testDeleteData()">اختبار حذف البيانات</button>
+                
+                <div id="firestore-results" class="results"></div>
+            </div>
+            
+            <!-- اختبار شامل -->
+            <div class="test-section">
+                <h3>🧪 اختبار شامل</h3>
+                <button class="test-button" onclick="runFullTest()" style="background: #ff6b6b;">تشغيل جميع الاختبارات</button>
+                <div id="full-test-results" class="results"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // تكوين Firebase (استخدم مفاتيحك الحقيقية هنا)
+        const firebaseConfig = {
+            apiKey: "your-api-key-here",
+            authDomain: "your-project-id.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project-id.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "your-app-id"
+        };
+        
+        let app, auth, db;
+        let currentUser = null;
+        let testDocId = 'test-document-' + Date.now();
+        
+        // تهيئة Firebase
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            
+            // مراقبة حالة المصادقة
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                updateAuthStatus();
+            });
+            
+            updateConnectionStatus(true, 'تم الاتصال بـ Firebase بنجاح!');
+        } catch (error) {
+            updateConnectionStatus(false, 'خطأ في الاتصال: ' + error.message);
+        }
+        
+        // وظائف الاختبار
+        window.testConnection = function() {
+            try {
+                if (app && auth && db) {
+                    updateConnectionStatus(true, 'الاتصال يعمل بشكل صحيح!');
+                } else {
+                    updateConnectionStatus(false, 'فشل في تهيئة Firebase');
+                }
+            } catch (error) {
+                updateConnectionStatus(false, 'خطأ: ' + error.message);
+            }
+        };
+        
+        window.testSignUp = async function() {
+            const email = document.getElementById('test-email').value;
+            const password = document.getElementById('test-password').value;
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                addAuthResult('✅ تم إنشاء الحساب بنجاح: ' + userCredential.user.email);
+            } catch (error) {
+                addAuthResult('❌ خطأ في إنشاء الحساب: ' + error.message);
+            }
+        };
+        
+        window.testSignIn = async function() {
+            const email = document.getElementById('test-email').value;
+            const password = document.getElementById('test-password').value;
+            
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                addAuthResult('✅ تم تسجيل الدخول بنجاح: ' + userCredential.user.email);
+            } catch (error) {
+                addAuthResult('❌ خطأ في تسجيل الدخول: ' + error.message);
+            }
+        };
+        
+        window.testAnonymousSignIn = async function() {
+            try {
+                const userCredential = await signInAnonymously(auth);
+                addAuthResult('✅ تم الدخول المجهول بنجاح: ' + userCredential.user.uid);
+            } catch (error) {
+                addAuthResult('❌ خطأ في الدخول المجهول: ' + error.message);
+            }
+        };
+        
+        window.testSignOut = async function() {
+            try {
+                await signOut(auth);
+                addAuthResult('✅ تم تسجيل الخروج بنجاح');
+            } catch (error) {
+                addAuthResult('❌ خطأ في تسجيل الخروج: ' + error.message);
+            }
+        };
+        
+        window.testWriteData = async function() {
+            if (!currentUser) {
+                addFirestoreResult('❌ يجب تسجيل الدخول أولاً');
+                return;
+            }
+            
+            const testData = document.getElementById('test-data').value;
+            
+            try {
+                await setDoc(doc(db, 'test-collection', testDocId), {
+                    data: testData,
+                    timestamp: new Date(),
+                    userId: currentUser.uid
+                });
+                addFirestoreResult('✅ تم حفظ البيانات بنجاح: ' + testData);
+            } catch (error) {
+                addFirestoreResult('❌ خطأ في حفظ البيانات: ' + error.message);
+            }
+        };
+        
+        window.testReadData = async function() {
+            try {
+                const docSnap = await getDoc(doc(db, 'test-collection', testDocId));
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    addFirestoreResult('✅ تم قراءة البيانات بنجاح: ' + JSON.stringify(data, null, 2));
+                } else {
+                    addFirestoreResult('❌ لا توجد بيانات للقراءة');
+                }
+            } catch (error) {
+                addFirestoreResult('❌ خطأ في قراءة البيانات: ' + error.message);
+            }
+        };
+        
+        window.testUpdateData = async function() {
+            if (!currentUser) {
+                addFirestoreResult('❌ يجب تسجيل الدخول أولاً');
+                return;
+            }
+            
+            try {
+                await updateDoc(doc(db, 'test-collection', testDocId), {
+                    data: 'بيانات محدثة',
+                    lastUpdated: new Date()
+                });
+                addFirestoreResult('✅ تم تحديث البيانات بنجاح');
+            } catch (error) {
+                addFirestoreResult('❌ خطأ في تحديث البيانات: ' + error.message);
+            }
+        };
+        
+        window.testDeleteData = async function() {
+            if (!currentUser) {
+                addFirestoreResult('❌ يجب تسجيل الدخول أولاً');
+                return;
+            }
+            
+            try {
+                await deleteDoc(doc(db, 'test-collection', testDocId));
+                addFirestoreResult('✅ تم حذف البيانات بنجاح');
+            } catch (error) {
+                addFirestoreResult('❌ خطأ في حذف البيانات: ' + error.message);
+            }
+        };
+        
+        window.runFullTest = async function() {
+            const results = document.getElementById('full-test-results');
+            results.textContent = 'جاري تشغيل الاختبارات الشاملة...\n';
+            
+            // اختبار الاتصال
+            results.textContent += '1. اختبار الاتصال...\n';
+            testConnection();
+            
+            // اختبار المصادقة المجهولة
+            results.textContent += '2. اختبار المصادقة المجهولة...\n';
+            try {
+                await testAnonymousSignIn();
+                results.textContent += '   ✅ نجح\n';
+            } catch (error) {
+                results.textContent += '   ❌ فشل: ' + error.message + '\n';
+            }
+            
+            // انتظار قليل
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // اختبار كتابة البيانات
+            results.textContent += '3. اختبار كتابة البيانات...\n';
+            try {
+                await testWriteData();
+                results.textContent += '   ✅ نجح\n';
+            } catch (error) {
+                results.textContent += '   ❌ فشل: ' + error.message + '\n';
+            }
+            
+            // اختبار قراءة البيانات
+            results.textContent += '4. اختبار قراءة البيانات...\n';
+            try {
+                await testReadData();
+                results.textContent += '   ✅ نجح\n';
+            } catch (error) {
+                results.textContent += '   ❌ فشل: ' + error.message + '\n';
+            }
+            
+            results.textContent += '\n🎉 انتهت جميع الاختبارات!';
+        };
+        
+        // وظائف مساعدة
+        function updateConnectionStatus(success, message) {
+            const status = document.getElementById('connection-status');
+            status.className = 'status ' + (success ? 'success' : 'error');
+            status.textContent = message;
+        }
+        
+        function updateAuthStatus() {
+            const status = document.getElementById('auth-status');
+            if (currentUser) {
+                status.className = 'status success';
+                status.textContent = 'مسجل الدخول: ' + (currentUser.email || 'مجهول') + ' (ID: ' + currentUser.uid + ')';
+            } else {
+                status.className = 'status pending';
+                status.textContent = 'غير مسجل الدخول';
+            }
+        }
+        
+        function addAuthResult(message) {
+            const results = document.getElementById('auth-results');
+            results.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        function addFirestoreResult(message) {
+            const results = document.getElementById('firestore-results');
+            results.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        // تحديث حالة Firestore
+        setTimeout(() => {
+            const status = document.getElementById('firestore-status');
+            if (db) {
+                status.className = 'status success';
+                status.textContent = 'متصل بقاعدة البيانات بنجاح';
+            } else {
+                status.className = 'status error';
+                status.textContent = 'فشل الاتصال بقاعدة البيانات';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
